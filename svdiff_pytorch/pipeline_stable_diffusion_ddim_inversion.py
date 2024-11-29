@@ -1,14 +1,33 @@
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Union
 import PIL
+import numpy as np
 import torch
 from diffusers import StableDiffusionPipeline, DDIMInverseScheduler
+from diffusers.loaders import TextualInversionLoaderMixin
 from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion_img2img import preprocess
-from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion_pix2pix_zero import Pix2PixInversionPipelineOutput
+from diffusers.utils import BaseOutput
+
+@dataclass
+class Pix2PixInversionPipelineOutput(BaseOutput, TextualInversionLoaderMixin):
+    """
+    Output class for Stable Diffusion pipelines.
+
+    Args:
+        latents (`torch.Tensor`)
+            inverted latents tensor
+        images (`List[PIL.Image.Image]` or `np.ndarray`)
+            List of denoised PIL images of length `batch_size` or numpy array of shape `(batch_size, height, width,
+            num_channels)`. PIL images or numpy array present the denoised images of the diffusion pipeline.
+    """
+
+    latents: torch.Tensor
+    images: Union[List[PIL.Image.Image], np.ndarray]
 
 
 class StableDiffusionPipelineWithDDIMInversion(StableDiffusionPipeline):
-    def __init__(self, vae, text_encoder, tokenizer, unet, scheduler, safety_checker, feature_extractor, requires_safety_checker: bool = True):
-        super().__init__(vae, text_encoder, tokenizer, unet, scheduler, safety_checker, feature_extractor, requires_safety_checker)
+    def __init__(self, vae, text_encoder, tokenizer, unet, scheduler, safety_checker, feature_extractor, image_encoder = None, requires_safety_checker: bool = True):
+        super().__init__(vae, text_encoder, tokenizer, unet, scheduler, safety_checker, feature_extractor, image_encoder, requires_safety_checker)
         self.inverse_scheduler = DDIMInverseScheduler.from_config(self.scheduler.config)
         # self.register_modules(inverse_scheduler=DDIMInverseScheduler.from_config(self.scheduler.config))
 
@@ -136,7 +155,7 @@ class StableDiffusionPipelineWithDDIMInversion(StableDiffusionPipeline):
 
         # 5. Encode input prompt
         num_images_per_prompt = 1
-        prompt_embeds = self._encode_prompt(
+        prompt_embeds = self.encode_prompt(
             prompt,
             device,
             num_images_per_prompt,

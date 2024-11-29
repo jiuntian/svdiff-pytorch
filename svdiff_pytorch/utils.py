@@ -102,6 +102,8 @@ def load_text_encoder_for_svdiff(
     state_dict.update(spectral_shifts_weights)
     # move the params from meta device to cpu
     missing_keys = set(model.state_dict().keys()) - set(state_dict.keys())
+    if "text_model.embeddings.position_ids" in missing_keys:
+        missing_keys.remove("text_model.embeddings.position_ids")
     if len(missing_keys) > 0:
         raise ValueError(
             f"Cannot load {model.__class__.__name__} from {pretrained_model_name_or_path} because the following keys are"

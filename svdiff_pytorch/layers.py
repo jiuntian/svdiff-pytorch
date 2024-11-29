@@ -125,6 +125,9 @@ class SVDLinear(nn.Linear):
         if not self.done_svd:
             # this happens after loading the state dict 
             self.perform_svd()
+        if isinstance(x, tuple):
+            if x[0] is not None and x[1] is None:
+                x = x[0]
         weight_updated = self.U.to(x.device, dtype=x.dtype) @ torch.diag(F.relu(self.S.to(x.device, dtype=x.dtype)+self.scale * self.delta)) @ self.Vh.to(x.device, dtype=x.dtype)
         return F.linear(x, weight_updated, bias=self.bias)
     

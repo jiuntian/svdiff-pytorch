@@ -1,8 +1,8 @@
-diffusers==0.14.0
+diffusers>=0.30.1
 accelerate
 torchvision
 safetensors
-transformers>=4.25.1, <=4.27.3
+transformers>=4.44.2
 ftfy
 tensorboard
 Jinja2
